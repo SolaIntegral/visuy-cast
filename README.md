@@ -1,36 +1,128 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Visuy Cast (ヴィズキャスト)
 
-## Getting Started
+## プロジェクト概要
 
-First, run the development server:
+**Visuy Cast**は、未来の「こころの容量」を予報する次世代のセルフケア・スケジュール帳です。
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+従来の時間管理だけでなく、予定の「精神的負荷」という新指標を導入し、ユーザーのメンタルキャパシティを天気予報のように予測・可視化することで、キャパシティオーバーを未然に防ぎます。
+
+## 特徴
+
+### 🌟 革新的な4象限マッピングUI
+- **縦軸**: ポジティブ ⇔ ネガティブ（感情の性質）
+- **横軸**: インプット ⇔ アウトプット（活動の種類）
+- **中心からの距離**: 負荷の強さ
+
+### 🌤️ メンタルウェザー・フォーキャスト
+- 未来のキャパシティを「☀️(快晴)」から「⛈️(雷雨)」まで天気アイコンで表示
+- 一目で「ヤバい日」が分かる直感的な可視化
+
+### 🤖 AIによるタスク提案
+- カレンダーの空き状況と天気予報を解析
+- キャパシティに余裕のある最適な実行日を提案
+
+### 📊 分析レポート
+- 過去の負荷データを「こころの気圧変動グラフ」として可視化
+- 自身のストレスパターンを発見し、自己理解を深める
+
+### 👥 プロフィールと共有
+- 現在のキャパシティ状況を客観的に把握
+- 予定名を隠した「天気予報カレンダー」を友人などに共有
+
+## ターゲット
+
+**複数の異なる種類のタスクによって複合的なストレスを抱える大学生**
+
+- 学業、アルバイト、就活など多様なタスク
+- デジタルでの自己管理に慣れ親しんでいる
+- 既存ツールでは「見えない負荷」を管理できず、気づかぬうちに無理をしてしまう課題
+
+## 技術スタック
+
+### フロントエンド
+- **Next.js (React)**: 高性能なWebアプリケーション構築
+- **TypeScript**: 型安全性と開発効率の向上
+- **HTML/CSS**: マークアップとスタイリング
+
+### バックエンド・インフラ
+- **Firebase**: 一気通貫のサービス提供
+  - Authentication（ユーザー認証）
+  - Firestore（データベース）
+  - Hosting（ホスティング）
+
+## 開発スケジュール
+
+### フェーズ1: 基盤構築（第1-2回）
+- 環境構築、ログイン機能
+- 4象限マッピングUIの実装
+- **マイルストーン**: プロトタイプ完成
+
+### フェーズ2: 価値提供機能（第3-4回）
+- 天気予報機能
+- AIスケジューリング
+- 分析・プロフィール機能
+
+### フェーズ3: リリース（第5回）
+- 最終テストとデバッグ
+- Firebase Hostingへデプロイ
+
+## プロジェクト構成
+
+```
+visuy-cast/
+├── README.md                    # このファイル
+├── CONCEPT.md                   # プロジェクトコンセプト詳細
+├── DEVELOPMENT_PLAN.md          # 開発計画・技術仕様
+├── PERSONA_ANALYSIS.md          # ペルソナ分析・リスク対策
+└── IMPLEMENTATION_SCHEDULE.md   # 実施スケジュール詳細
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## デザインコンセプト
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**「Calm Tech（穏やかなテクノロジー）」**
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- ユーザーの日常に静かに寄り添うデザイン
+- スカイブルー・ライトミントグリーンを基調とした清潔感のあるミニマルデザイン
+- 可読性が高く親しみやすいフォント
 
-## Learn More
+## 競合との差別化
 
-To learn more about Next.js, take a look at the following resources:
+| 競合サービス | 管理対象 | Visuy Castの差別化 |
+|-------------|----------|-------------------|
+| すごい時間割 | 講義スケジュール | 講義の「重さ」を可視化 |
+| TimeTree | 時間・スケジュール | 個人のセルフケアに特化 |
+| Studyplus | 学習量・時間 | 生活全体の「質（精神的負荷）」を管理 |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**Visuy Castは「時間（What/When）」ではなく「こころの容量（How you feel）」を管理する、全く新しいカテゴリーのツールです。**
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 開発チーム
 
-## Deploy on Vercel
+- **プロジェクトマネージャー**: プロジェクト全体の管理
+- **フロントエンド開発者**: UI/UX実装
+- **バックエンド開発者**: Firebase連携・データ処理
+- **デザイナー**: UI/UXデザイン
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## ライセンス
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+このプロジェクトは教育目的で開発されています。
+
+## 今後の展望
+
+### 短期（3ヶ月以内）
+- モバイルアプリ化
+- 通知機能の追加
+- データエクスポート機能
+
+### 中期（6ヶ月以内）
+- グループ機能（友人とのスケジュール共有）
+- AI分析の精度向上
+- カスタム天気アイコンの追加
+
+### 長期（1年以内）
+- 医療機関との連携
+- 研究データの収集・分析
+- 企業向けソリューションの展開
+
+---
+
+**Visuy Cast** - あなたのこころの天気予報士
