@@ -29,9 +29,31 @@ body {
   color: var(--foreground);
   font-family: var(--font-noto-sans-jp), sans-serif;
   font-feature-settings: "palt";
+  font-weight: 300;
 }
 
 /* スムーズなトランジション */
 * {
   transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* 時間帯に応じた背景アニメーション */
+@keyframes morning-glow {
+  0% { opacity: 1; }
+  100% { opacity: 0.95; }
+}
+
+@keyframes day-sky {
+  0% { opacity: 1; }
+  100% { opacity: 0.98; }
+}
+
+@keyframes sunset-glow {
+  0% { opacity: 1; }
+  100% { opacity: 0.93; }
+}
+
+@keyframes night-twinkle {
+  0% { opacity: 0.8; }
+  100% { opacity: 1; }
 }

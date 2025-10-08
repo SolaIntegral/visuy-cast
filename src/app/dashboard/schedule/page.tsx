@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getSchedules } from '@/lib/firebase/firestore';
 import { Schedule, WeatherForecast } from '@/types';
 import { generateWeekForecast } from '@/lib/weatherForecast';
+import TimeBasedBackground from '@/components/TimeBasedBackground';
 import Link from 'next/link';
 
 export default function SchedulePage() {
@@ -12,7 +13,8 @@ export default function SchedulePage() {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [weekForecast, setWeekForecast] = useState<WeatherForecast[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDate, setSelectedDate] = useState<string>('');
+  const [selectedDate, setSelectedDate] = useState<number | null>(null);
+  const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
 
   useEffect(() => {
     if (user) {
@@ -32,224 +34,291 @@ export default function SchedulePage() {
     const { schedules: fetchedSchedules } = await getSchedules(user.uid, startDate, endDate);
     setSchedules(fetchedSchedules);
 
-    // 週間予報を生成
     const today = new Date();
-    const forecast = generateWeekForecast(today, 7, fetchedSchedules);
+    const forecast = generateWeekForecast(today, 30, fetchedSchedules);
     setWeekForecast(forecast);
 
     setLoading(false);
   };
 
-  const formatDate = (date: Date): string => {
-    return new Date(date).toLocaleDateString('ja-JP', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      weekday: 'short',
-    });
+  const getDayData = (dayNumber: number) => {
+    const today = new Date();
+    const targetDate = new Date(today.getFullYear(), today.getMonth(), dayNumber);
+    const forecast = weekForecast.find(f => f.date.getDate() === dayNumber);
+    
+    return {
+      date: dayNumber,
+      weather: forecast?.weather || '☀️',
+      capacity: forecast ? Math.round((1 - forecast.totalLoad) * 100) : 90,
+      events: forecast?.scheduleCount || 0,
+      hasGoldenTime: forecast?.scheduleCount === 0 && forecast?.weather === '☀️',
+      isToday: today.getDate() === dayNumber
+    };
   };
 
-  const getSchedulesForDate = (date: Date): Schedule[] => {
-    const dateKey = new Date(date).toISOString().split('T')[0];
-    return schedules.filter((schedule) => {
-      const scheduleKey = new Date(schedule.date).toISOString().split('T')[0];
-      return scheduleKey === dateKey;
-    });
+  const getDayBackground = (day: { date: number; weather: string; capacity: number; events: number; hasGoldenTime: boolean; isToday: boolean }) => {
+    let baseClass = 'relative p-3 rounded-2xl cursor-pointer transition-all hover:bg-white/10';
+    
+    if (day.isToday) {
+      baseClass += ' ring-1 ring-white/30 bg-white/10';
+    } else if (selectedDate === day.date) {
+      baseClass += ' bg-white/15';
+    }
+    
+    if (day.hasGoldenTime) {
+      baseClass += ' bg-gradient-to-br from-yellow-400/20 to-orange-400/15';
+    }
+    
+    return baseClass;
   };
+
+  const getCapacityColor = (capacity: number) => {
+    if (capacity >= 80) return 'text-green-400';
+    if (capacity >= 60) return 'text-yellow-400';
+    if (capacity >= 40) return 'text-orange-400';
+    return 'text-red-400';
+  };
+
+  const getCurrentMonth = () => {
+    const now = new Date();
+    return `${now.getFullYear()}年${now.getMonth() + 1}月`;
+  };
+
+  const getDaysInMonth = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    return new Date(year, month + 1, 0).getDate();
+  };
+
+  const selectedDayData = selectedDate ? getDayData(selectedDate) : null;
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <header className="bg-white shadow-sm">
-          <div className="container mx-auto px-4 py-4">
-            <Link href="/dashboard" className="text-2xl font-bold text-gray-900">
-              Visuy Cast
-            </Link>
-          </div>
-        </header>
-        <main className="container mx-auto px-4 py-8">
-          <div className="text-center text-gray-600">読み込み中...</div>
-        </main>
+      <div className="min-h-screen flex items-center justify-center">
+        <TimeBasedBackground />
+        <div className="text-white text-xl font-light drop-shadow-lg">読み込み中...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen relative overflow-hidden">
+      <TimeBasedBackground />
+
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="backdrop-blur-md bg-white/10 border-b border-white/20 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/dashboard" className="text-2xl font-bold text-gray-900">
+            <Link href="/dashboard" className="text-2xl font-light text-white drop-shadow-lg">
               Visuy Cast
             </Link>
-            <Link
-              href="/dashboard"
-              className="text-gray-700 hover:text-gray-900"
-            >
-              ← ダッシュボード
-            </Link>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setViewMode('month')}
+                className={`px-4 py-2 text-sm font-light rounded-lg transition-colors ${
+                  viewMode === 'month' 
+                    ? 'bg-white/15 text-white' 
+                    : 'bg-white/5 text-white/80 border border-white/20'
+                }`}
+              >
+                月
+              </button>
+              <button
+                onClick={() => setViewMode('week')}
+                className={`px-4 py-2 text-sm font-light rounded-lg transition-colors ${
+                  viewMode === 'week' 
+                    ? 'bg-white/15 text-white' 
+                    : 'bg-white/5 text-white/80 border border-white/20'
+                }`}
+              >
+                週
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            スケジュール
-          </h1>
-          <p className="text-gray-600">
-            あなたの予定とこころの天気予報
-          </p>
-        </div>
+      <main className="relative z-10 pb-24">
+        <div className="container mx-auto px-4 py-8 space-y-8">
+          {/* Header */}
+          <div className="flex items-center justify-between pt-8">
+            <h1 className="text-white drop-shadow-lg text-3xl font-light">カレンダー</h1>
+          </div>
 
-        {/* Week Forecast */}
-        <div className="bg-white rounded-2xl p-6 shadow-lg mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">週間天気予報</h2>
-          <div className="grid grid-cols-7 gap-4">
-            {weekForecast.map((forecast, index) => {
-              const dayName = ['日', '月', '火', '水', '木', '金', '土'][forecast.date.getDay()];
-              const isToday = new Date().toDateString() === forecast.date.toDateString();
-              
-              return (
-                <div
-                  key={index}
-                  className={`text-center p-4 rounded-lg ${
-                    isToday ? 'bg-gradient-to-br from-[#a0d2eb] to-[#b2f2bb] text-white' : 'bg-gray-50'
-                  }`}
-                >
-                  <div className="text-sm font-medium mb-2">{dayName}</div>
-                  <div className="text-3xl mb-2">{forecast.weather}</div>
-                  <div className="text-xs">
-                    {forecast.scheduleCount}件
+          {/* Month Navigation */}
+          <div className="flex items-center justify-between px-2">
+            <button className="text-white/90 hover:bg-white/10 border-0 font-light px-3 py-2 rounded-lg">
+              ←
+            </button>
+            <h2 className="text-white/95 drop-shadow-sm text-xl font-light">{getCurrentMonth()}</h2>
+            <button className="text-white/90 hover:bg-white/10 border-0 font-light px-3 py-2 rounded-lg">
+              →
+            </button>
+          </div>
+
+          {/* Calendar Grid */}
+          <div className="backdrop-blur-sm bg-white/3 rounded-3xl">
+            <div className="pt-8 px-6 pb-8">
+              {/* Week headers */}
+              <div className="grid grid-cols-7 gap-1 mb-4">
+                {['日', '月', '火', '水', '木', '金', '土'].map((day, index) => (
+                  <div key={index} className="text-center text-sm text-white/70 p-3 font-light">
+                    {day}
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+                ))}
+              </div>
 
-        {/* Calendar View */}
-        <div className="bg-white rounded-2xl p-6 shadow-lg mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">カレンダー</h2>
-            <Link
-              href="/dashboard/schedule/new"
-              className="px-4 py-2 bg-gradient-to-r from-[#a0d2eb] to-[#b2f2bb] text-white rounded-lg font-medium hover:opacity-90"
-            >
-              + 予定を追加
-            </Link>
-          </div>
-
-          {weekForecast.length === 0 ? (
-            <div className="text-center text-gray-500 py-8">
-              予定がありません。
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {weekForecast.map((forecast, index) => {
-                const daySchedules = getSchedulesForDate(forecast.date);
-                if (daySchedules.length === 0) return null;
-
-                return (
-                  <div key={index} className="border-l-4 border-[#a0d2eb] pl-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center space-x-3">
-                        <span className="text-3xl">{forecast.weather}</span>
-                        <div>
-                          <h3 className="font-semibold text-gray-900">
-                            {formatDate(forecast.date)}
-                          </h3>
-                          <p className="text-sm text-gray-600">
-                            {forecast.description}
-                          </p>
+              {/* Calendar days */}
+              <div className="grid grid-cols-7 gap-1">
+                {/* 月初めの空セル */}
+                {Array.from({ length: new Date(new Date().getFullYear(), new Date().getMonth(), 1).getDay() }, (_, index) => (
+                  <div key={`empty-${index}`} className="p-2"></div>
+                ))}
+                
+                {/* カレンダーの日 */}
+                {Array.from({ length: getDaysInMonth() }, (_, index) => {
+                  const day = getDayData(index + 1);
+                  return (
+                    <div
+                      key={day.date}
+                      className={getDayBackground(day)}
+                      onClick={() => setSelectedDate(day.date)}
+                    >
+                      <div className="text-center">
+                        <div className="text-sm mb-2 text-white/95 font-light">{day.date}</div>
+                        <div className="text-xl mb-2 drop-shadow-sm">{day.weather}</div>
+                        <div className={`text-xs font-light ${getCapacityColor(day.capacity)}`}>
+                          {day.capacity}%
                         </div>
+                        {day.events > 0 && (
+                          <div className="flex justify-center mt-2">
+                            <div className="w-1.5 h-1.5 bg-white/80 rounded-full"></div>
+                          </div>
+                        )}
+                        {day.hasGoldenTime && (
+                          <div className="absolute top-2 right-2">
+                            <span className="text-yellow-300 drop-shadow-sm">✨</span>
+                          </div>
+                        )}
                       </div>
                     </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
 
-                    <div className="space-y-2">
-                      {daySchedules.map((schedule) => (
-                        <div
-                          key={schedule.id}
-                          className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors"
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <h4 className="font-medium text-gray-900 mb-1">
-                                {schedule.title}
-                              </h4>
-                              {schedule.description && (
-                                <p className="text-sm text-gray-600 mb-2">
-                                  {schedule.description}
-                                </p>
-                              )}
-                              {schedule.startTime && schedule.endTime && (
-                                <p className="text-sm text-gray-500">
-                                  {schedule.startTime} - {schedule.endTime}
-                                </p>
-                              )}
-                            </div>
-                            <div className="ml-4 text-right">
-                              <div className="text-xs text-gray-500 mb-1">負荷</div>
-                              <div className="flex items-center space-x-1">
-                                <span className="text-sm">
-                                  {schedule.load.emotional > 0 ? '😊' : '😰'}
-                                </span>
-                                <span className="text-sm">
-                                  {schedule.load.activity > 0 ? '📤' : '📥'}
-                                </span>
-                                <span className="text-sm font-medium">
-                                  {(schedule.load.intensity * 100).toFixed(0)}%
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+          {/* Golden Time Legend */}
+          <div className="backdrop-blur-sm bg-gradient-to-r from-yellow-400/15 to-orange-400/10 rounded-3xl">
+            <div className="pt-8 px-6 pb-8">
+              <div className="flex items-center gap-4">
+                <span className="text-2xl drop-shadow-sm">✨</span>
+                <div>
+                  <h3 className="mb-2 text-white/95 text-lg font-light drop-shadow-sm">ゴールデンタイム</h3>
+                  <p className="text-sm text-white/80 font-light leading-relaxed">
+                    予定がなく、キャパシティが高い時間帯。新しい挑戦に最適です。
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Selected Date Details */}
+          {selectedDayData && (
+            <div className="backdrop-blur-sm bg-white/3 rounded-3xl">
+              <div className="pt-8 px-6">
+                <h3 className="flex items-center gap-3 mb-6 text-white/95 text-lg font-light drop-shadow-sm">
+                  <span className="text-2xl">{selectedDayData.weather}</span>
+                  {getCurrentMonth().slice(0, -1)}{selectedDayData.date}日の詳細
+                </h3>
+              </div>
+              <div className="px-6 pb-8 space-y-6">
+                <div className="flex items-center justify-between">
+                  <span className="text-white/90 font-light">キャパシティ</span>
+                  <div className={`flex items-center gap-3 ${getCapacityColor(selectedDayData.capacity)}`}>
+                    <span className="font-light">{selectedDayData.capacity}%</span>
+                    <div className="w-24 h-1 bg-white/15 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-current rounded-full transition-all duration-300"
+                        style={{ width: `${selectedDayData.capacity}%` }}
+                      />
                     </div>
                   </div>
-                );
-              })}
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-white/90 font-light">予定数</span>
+                  <span className="bg-white/10 text-white/90 border-0 font-light px-3 py-1 rounded-lg text-sm">
+                    {selectedDayData.events}件
+                  </span>
+                </div>
+
+                {selectedDayData.hasGoldenTime && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/90 font-light">ゴールデンタイム</span>
+                    <span className="bg-yellow-400/20 text-white border-0 font-light px-3 py-1 rounded-lg text-sm flex items-center gap-1">
+                      <span>✨</span>
+                      あり
+                    </span>
+                  </div>
+                )}
+
+                {selectedDayData.hasGoldenTime && (
+                  <Link
+                    href="/dashboard/schedule/new"
+                    className="block w-full mt-6 bg-white/10 hover:bg-white/15 text-white border-0 font-light text-center py-3 rounded-lg"
+                  >
+                    この日にタスクを配置
+                  </Link>
+                )}
+              </div>
             </div>
           )}
         </div>
-
-        {/* All Schedules */}
-        {schedules.length > 0 && (
-          <div className="bg-white rounded-2xl p-6 shadow-lg">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              全ての予定（{schedules.length}件）
-            </h2>
-            <div className="space-y-2">
-              {schedules
-                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-                .map((schedule) => (
-                  <div
-                    key={schedule.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                  >
-                    <div className="flex-1">
-                      <div className="font-medium text-gray-900">{schedule.title}</div>
-                      <div className="text-sm text-gray-500">
-                        {formatDate(schedule.date)}
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span>
-                        {schedule.load.emotional > 0 ? '😊' : '😰'}
-                      </span>
-                      <span>
-                        {schedule.load.activity > 0 ? '📤' : '📥'}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
-        )}
       </main>
+
+      {/* Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white/10 backdrop-blur-md border-t border-white/20 z-20">
+        <div className="flex justify-around items-center h-16">
+          <Link
+            href="/dashboard"
+            className="flex flex-col items-center justify-center p-2 rounded-lg transition-colors text-white/70 hover:text-white"
+          >
+            <span className="text-xl">🏠</span>
+            <span className="text-xs mt-1 font-light">ホーム</span>
+          </Link>
+
+          <div className="flex flex-col items-center justify-center p-2 rounded-lg transition-colors text-white bg-white/20">
+            <span className="text-xl">📅</span>
+            <span className="text-xs mt-1 font-light">カレンダー</span>
+          </div>
+
+          <Link
+            href="/dashboard/schedule/new"
+            className="flex flex-col items-center justify-center p-3 bg-white/30 text-white rounded-full shadow-lg backdrop-blur-md -mt-8"
+          >
+            <span className="text-2xl">➕</span>
+          </Link>
+
+          <Link
+            href="/dashboard/analysis"
+            className="flex flex-col items-center justify-center p-2 rounded-lg transition-colors text-white/70 hover:text-white"
+          >
+            <span className="text-xl">📊</span>
+            <span className="text-xs mt-1 font-light">分析</span>
+          </Link>
+
+          <Link
+            href="/dashboard/profile"
+            className="flex flex-col items-center justify-center p-2 rounded-lg transition-colors text-white/70 hover:text-white"
+          >
+            <span className="text-xl">👤</span>
+            <span className="text-xs mt-1 font-light">プロフィール</span>
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }
-

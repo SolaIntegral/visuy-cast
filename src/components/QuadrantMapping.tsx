@@ -54,7 +54,7 @@ export default function QuadrantMapping({
     ctx.clearRect(0, 0, size, size);
 
     // 背景の円（負荷の強さを示す同心円）
-    ctx.strokeStyle = '#e2e8f0';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
     ctx.lineWidth = 1;
     for (let i = 1; i <= 3; i++) {
       ctx.beginPath();
@@ -63,7 +63,7 @@ export default function QuadrantMapping({
     }
 
     // 軸の描画
-    ctx.strokeStyle = '#cbd5e0';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
     ctx.lineWidth = 2;
     
     // 縦軸（感情）
@@ -79,8 +79,8 @@ export default function QuadrantMapping({
     ctx.stroke();
 
     // ラベルの描画
-    ctx.fillStyle = '#4a5568';
-    ctx.font = '14px "Noto Sans JP", sans-serif';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.font = '300 14px "Noto Sans JP", sans-serif';
     ctx.textAlign = 'center';
     
     // 上：ポジティブ
@@ -107,20 +107,9 @@ export default function QuadrantMapping({
     const gradient = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, 15);
     const intensity = value.intensity;
     
-    // 感情と活動に基づいて色を決定
-    let color1, color2;
-    if (value.emotional > 0) {
-      // ポジティブ
-      color1 = `rgba(178, 242, 187, ${intensity})`;
-      color2 = `rgba(178, 242, 187, ${intensity * 0.3})`;
-    } else {
-      // ネガティブ
-      color1 = `rgba(160, 210, 235, ${intensity})`;
-      color2 = `rgba(160, 210, 235, ${intensity * 0.3})`;
-    }
-    
-    gradient.addColorStop(0, color1);
-    gradient.addColorStop(1, color2);
+    // 透明感のある白色
+    gradient.addColorStop(0, `rgba(255, 255, 255, ${0.9 * intensity})`);
+    gradient.addColorStop(1, `rgba(255, 255, 255, ${0.3 * intensity})`);
     
     ctx.fillStyle = gradient;
     ctx.beginPath();
@@ -128,14 +117,14 @@ export default function QuadrantMapping({
     ctx.fill();
     
     // 境界線
-    ctx.strokeStyle = '#4a5568';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(pos.x, pos.y, 15, 0, 2 * Math.PI);
     ctx.stroke();
 
     // 中心からの線
-    ctx.strokeStyle = '#cbd5e0';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
     ctx.lineWidth = 2;
     ctx.setLineDash([5, 5]);
     ctx.beginPath();
@@ -183,33 +172,33 @@ export default function QuadrantMapping({
         ref={canvasRef}
         width={size}
         height={size}
-        className="border-2 border-gray-200 rounded-2xl cursor-pointer shadow-lg bg-white"
+        className="border border-white/20 rounded-2xl cursor-pointer backdrop-blur-sm bg-white/5"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerUp}
       />
       
-      <div className="bg-white rounded-lg p-4 shadow-md w-full max-w-md">
-        <h3 className="text-sm font-medium text-gray-700 mb-2">負荷の詳細</h3>
-        <div className="space-y-2 text-sm text-gray-600">
+      <div className="backdrop-blur-sm bg-white/5 border border-white/20 rounded-2xl p-4 w-full max-w-md">
+        <h3 className="text-sm font-light text-white/90 mb-2">負荷の詳細</h3>
+        <div className="space-y-2 text-sm text-white/80 font-light">
           <div className="flex justify-between">
             <span>感情:</span>
-            <span className="font-medium">
+            <span className="font-normal">
               {value.emotional > 0 ? 'ポジティブ' : 'ネガティブ'} 
               ({Math.abs(value.emotional * 100).toFixed(0)}%)
             </span>
           </div>
           <div className="flex justify-between">
             <span>活動:</span>
-            <span className="font-medium">
+            <span className="font-normal">
               {value.activity > 0 ? 'アウトプット' : 'インプット'} 
               ({Math.abs(value.activity * 100).toFixed(0)}%)
             </span>
           </div>
           <div className="flex justify-between">
             <span>負荷の強さ:</span>
-            <span className="font-medium">{(value.intensity * 100).toFixed(0)}%</span>
+            <span className="font-normal">{(value.intensity * 100).toFixed(0)}%</span>
           </div>
         </div>
       </div>
